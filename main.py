@@ -3,6 +3,7 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import quote
 
+import duckdb
 import requests
 import requests_cache
 
@@ -83,6 +84,20 @@ def fetch_frontmatter(doi):
         return None
 
 
+def store_frontmatter(conn, record):
+    """Insert a frontmatter record into the DuckDB table."""
+    try:
+        conn.execute(
+            """
+            INSERT INTO frontmatter (doi, title, abstract)
+            VALUES (?, ?, ?)
+            """,
+            (record["doi"], record["title"], record["abstract"]),
+        )
+    except Exception as e:
+        print(f"Failed to store record for DOI {record['doi']}: {e}")
+
+
 def main():
     requests_data = load_requests_data(Path("./data/requests.json"))
     if requests_data is None:
@@ -90,7 +105,19 @@ def main():
 
     count_requests_per_server(requests_data)
 
-    frontmatter_list = []
+    # Initialize DuckDB connection and ensure table exists
+    db_path = Path("./data/frontmatter.duckdb")
+    duckdbconn = duckdb.connect(database=str(db_path))
+    duckdbconn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS frontmatter (
+            doi TEXT PRIMARY KEY,
+            title TEXT,
+            abstract TEXT
+        )
+        """
+    )
+
     for idx, entry in enumerate(requests_data[:10]):
         doi = entry.get("preprint", "")
         if not doi:
@@ -102,11 +129,9 @@ def main():
             print(f"[{idx}] Failed to fetch frontmatter for DOI {doi}")
             continue
 
-        frontmatter_list.append(result)
+        store_frontmatter(duckdbconn, result)
 
-    print("Frontmatter list:")
-    for item in frontmatter_list:
-        print(item)
+    duckdbconn.close()
 
 
 if __name__ == "__main__":
