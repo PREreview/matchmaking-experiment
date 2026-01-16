@@ -11,23 +11,34 @@ app = Flask(__name__)
 
 HTML_TEMPLATE = """
 <!doctype html>
-<title>DOI Similarity Search</title>
-<h1>Search by DOI</h1>
-<form method="post">
-  <input type="text" name="doi" placeholder="Enter DOI" style="width:400px;" required>
-  <button type="submit">Search</button>
-</form>
-{% if error %}
-  <p style="color:red;">{{ error }}</p>
-{% endif %}
-{% if results %}
-  <h2>Top 10 similar entries</h2>
-  <ul>
-  {% for item in results %}
-    <li><a href="https://doi.org/{{ item.doi }}" target="_blank">{{ item.doi }}</a> – {{ item.title }}</li>
-  {% endfor %}
-  </ul>
-{% endif %}
+<head>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css"
+  >
+  <title>Related Review Requests</title>
+</head>
+<body>
+  <main>
+    <h1>Find related review requests</h1>
+    <p>Find review requests for preprints similar to a given DOI.</p>
+    <form method="post" role="search">
+      <input type="text" name="doi" placeholder="Enter DOI" style="width:400px;" required>
+      <button type="submit">Search</button>
+    </form>
+    {% if error %}
+      <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    {% if results %}
+      <h2>Top 10 related review requests</h2>
+      <ul>
+        {% for item in results %}
+          <li><a href="https://doi.org/{{ item.doi }}" target="_blank">{{ item.doi }}</a> – {{ item.title }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </main>
+</body>
 """
 
 _webapp_embedder = TextEmbedding(model_name="thenlper/gte-large")
