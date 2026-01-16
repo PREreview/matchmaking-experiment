@@ -90,18 +90,23 @@ def main():
 
     count_requests_per_server(requests_data)
 
-    doi = requests_data[0].get("preprint", "")
-    if not doi:
-        print("no doi in request data")
-        exit(1)
+    frontmatter_list = []
+    for idx, entry in enumerate(requests_data[:10]):
+        doi = entry.get("preprint", "")
+        if not doi:
+            print(f"[{idx}] No DOI in request data")
+            continue
 
-    result = fetch_frontmatter(doi)
-    if result is None:
-        print(f"Failed to fetch frontmatter for DOI {doi}")
-        exit(1)
+        result = fetch_frontmatter(doi)
+        if result is None:
+            print(f"[{idx}] Failed to fetch frontmatter for DOI {doi}")
+            continue
 
-    print(f"Title: {result['title']}")
-    print(f"Abstract: {result['abstract']}")
+        frontmatter_list.append(result)
+
+    print("Frontmatter list:")
+    for item in frontmatter_list:
+        print(item)
 
 
 if __name__ == "__main__":
