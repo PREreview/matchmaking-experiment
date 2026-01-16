@@ -1,6 +1,9 @@
 import json
 from collections import Counter
 from pathlib import Path
+from urllib.parse import quote
+
+import requests
 
 
 def load_requests_data(data_path: Path):
@@ -47,12 +50,32 @@ def main():
 
     count_requests_per_server(requests_data)
 
+    # Find the first DOI for a biorxiv request
     doi = ""
     for request in requests_data:
         if request.get("server", "") == "biorxiv":
-            doi = request["preprint"]
+            doi = request.get("preprint", "")
             break
-    print(doi)
+
+    if not doi:
+        print("No DOI found for a biorxiv request.")
+    else:
+        # Use the OpenAlex Works API to retrieve title and abstract
+
+        # Encode the DOI for safe URL usage
+        encoded_doi = quote(doi)
+        api_url = f"https://api.openalex.org/works/doi:{encoded_doi}"
+
+        try:
+            response = requests.get(api_url, timeout=10)
+            response.raise_for_status()
+            work_data = response.json()
+            title = work_data.get("display_name") or work_data.get("title")
+            abstract = work_data.get("abstract_inverted_index")
+            print(f"Title: {title}")
+            print(f"Abstract: {abstract}")
+        except Exception as e:
+            print(f"Failed to retrieve OpenAlex data for DOI {doi}: {e}")
 
 
 if __name__ == "__main__":
