@@ -8,7 +8,7 @@ import requests_cache
 
 # cache requests
 try:
-    requests_cache.install_cache("openalex_cache", expire_after=86400)
+    requests_cache.install_cache("data/openalex_cache", expire_after=86400)
 except ImportError:
     print("failed to init request cache")
     exit(1)
@@ -84,7 +84,7 @@ def fetch_frontmatter(doi):
 
 
 def main():
-    requests_data = load_requests_data(Path("./prereview-data/requests.json"))
+    requests_data = load_requests_data(Path("./data/requests.json"))
     if requests_data is None:
         return
 
