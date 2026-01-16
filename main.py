@@ -4,18 +4,14 @@ from pathlib import Path
 from urllib.parse import quote
 
 import requests
+import requests_cache
 
-# Optional caching of HTTP requests to avoid repeated network calls.
-# Uses `requests_cache` if available; otherwise proceeds without caching.
+# cache requests
 try:
-    import requests_cache
-
-    # Create (or reuse) a SQLite cache named "openalex_cache".
-    # Cached responses expire after 1 day (86400 seconds).
     requests_cache.install_cache("openalex_cache", expire_after=86400)
 except ImportError:
-    # If requests_cache is not installed, the script will run without caching.
-    pass
+    print("failed to init request cache")
+    exit(1)
 
 
 def load_requests_data(data_path: Path):
@@ -71,41 +67,40 @@ def main():
 
     if not doi:
         print("No DOI found for a biorxiv request.")
-    else:
-        # Use the OpenAlex Works API to retrieve title and abstract
+        exit(1)
 
-        # Encode the DOI for safe URL usage
-        encoded_doi = quote(doi)
-        api_url = f"https://api.openalex.org/works/doi:{encoded_doi}"
+    # Encode the DOI for safe URL usage
+    encoded_doi = quote(doi)
+    api_url = f"https://api.openalex.org/works/doi:{encoded_doi}"
 
-        try:
-            response = requests.get(api_url, timeout=10)
-            response.raise_for_status()
-            work_data = response.json()
-            title = work_data.get("display_name") or work_data.get("title")
-            abstract_inverted_index = work_data.get("abstract_inverted_index")
+    try:
+        response = requests.get(api_url, timeout=10)
+        response.raise_for_status()
+        work_data = response.json()
+        title = work_data.get("display_name") or work_data.get("title")
+        abstract_inverted_index = work_data.get("abstract_inverted_index")
 
-            # Rebuild the abstract from the inverted index
-            if abstract_inverted_index:
-                try:
-                    max_pos = max(
-                        pos
-                        for positions in abstract_inverted_index.values()
-                        for pos in positions
-                    )
-                    abstract_tokens = [""] * (max_pos + 1)
-                    for term, positions in abstract_inverted_index.items():
-                        for pos in positions:
-                            abstract_tokens[pos] = term
-                    abstract = " ".join(abstract_tokens).strip()
-                except Exception:
-                    abstract = "Error reconstructing abstract"
-            else:
-                abstract = "No abstract available"
-            print(f"Title: {title}")
-            print(f"Abstract: {abstract}")
-        except Exception as e:
-            print(f"Failed to retrieve OpenAlex data for DOI {doi}: {e}")
+        # Rebuild the abstract from the inverted index
+        if abstract_inverted_index:
+            try:
+                max_pos = max(
+                    pos
+                    for positions in abstract_inverted_index.values()
+                    for pos in positions
+                )
+                abstract_tokens = [""] * (max_pos + 1)
+                for term, positions in abstract_inverted_index.items():
+                    for pos in positions:
+                        abstract_tokens[pos] = term
+                abstract = " ".join(abstract_tokens).strip()
+            except Exception:
+                abstract = "Error reconstructing abstract"
+        else:
+            abstract = "No abstract available"
+        print(f"Title: {title}")
+        print(f"Abstract: {abstract}")
+    except Exception as e:
+        print(f"Failed to retrieve OpenAlex data for DOI {doi}: {e}")
 
 
 if __name__ == "__main__":
