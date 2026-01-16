@@ -97,7 +97,7 @@ def embed_frontmatter(record, embedder):
         return None
 
 
-def store_frontmatter(conn, record, embedding):
+def store_frontmatter(conn, frontmatter, embedding):
     """Insert a frontmatter record and its embedding into the DuckDB table."""
     try:
         conn.execute(
@@ -105,10 +105,15 @@ def store_frontmatter(conn, record, embedding):
             INSERT INTO frontmatter (doi, title, abstract, embedding)
             VALUES (?, ?, ?, ?)
             """,
-            (record["doi"], record["title"], record["abstract"], embedding),
+            (
+                frontmatter["doi"],
+                frontmatter["title"],
+                frontmatter["abstract"],
+                embedding,
+            ),
         )
     except Exception as e:
-        print(f"Failed to store record for DOI {record['doi']}: {e}")
+        print(f"Failed to store record for DOI {frontmatter['doi']}: {e}")
 
 
 def main():
@@ -141,17 +146,17 @@ def main():
             print(f"[{idx}] No DOI in request data")
             continue
 
-        result = fetch_frontmatter(doi)
-        if result is None:
+        frontmatter = fetch_frontmatter(doi)
+        if frontmatter is None:
             print(f"[{idx}] Failed to fetch frontmatter for DOI {doi}")
             continue
 
-        embedding = embed_frontmatter(result, embedder)
+        embedding = embed_frontmatter(frontmatter, embedder)
         if embedding is None:
             print(f"[{idx}] Skipping storage due to embedding failure for DOI {doi}")
             continue
 
-        store_frontmatter(duckdbconn, result, embedding)
+        store_frontmatter(duckdbconn, frontmatter, embedding)
 
     duckdbconn.close()
 
