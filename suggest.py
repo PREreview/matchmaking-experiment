@@ -29,6 +29,11 @@ HTML_TEMPLATE = """
     {% if error %}
       <p style="color:red;">{{ error }}</p>
     {% endif %}
+    {% if query %}
+      <h2>Searched DOI</h2>
+      <p><a href="https://doi.org/{{ query.doi }}" target="_blank">{{ query.doi }}</a></p>
+      <p>{{ query.title }}</p>
+    {% endif %}
     {% if results %}
       <h2>Top 10 related review requests</h2>
       <ul>
@@ -75,27 +80,38 @@ def index():
     error = None
 
     if request.method != "POST":
-        return render_template_string(HTML_TEMPLATE, results=None, error=None)
+        return render_template_string(
+            HTML_TEMPLATE, results=None, error=None, query=None
+        )
 
     doi = request.form.get("doi", "").strip()
     if not doi:
         error = "Please provide a DOI."
-        return render_template_string(HTML_TEMPLATE, results=None, error=error)
+        return render_template_string(
+            HTML_TEMPLATE, results=None, error=error, query=None
+        )
 
     front = fetch_frontmatter(doi)
     if not front:
         error = f"No entry found for DOI {doi}."
-        return render_template_string(HTML_TEMPLATE, results=None, error=error)
+        return render_template_string(
+            HTML_TEMPLATE, results=None, error=error, query=None
+        )
 
     emb = calc_embedding(front, _webapp_embedder)
     if emb is None:
         error = "Failed to compute embedding."
-        return render_template_string(HTML_TEMPLATE, results=None, error=error)
+        return render_template_string(
+            HTML_TEMPLATE, results=None, error=error, query=None
+        )
 
-    results = _find_similar(emb)
+    results = _find_similar(emb, limit=10)
     if not results:
         error = "No similar entries found."
-    return render_template_string(HTML_TEMPLATE, results=results, error=error)
+    query_info = {"doi": doi, "title": front.get("title", "")}
+    return render_template_string(
+        HTML_TEMPLATE, results=results, error=error, query=query_info
+    )
 
 
 if __name__ == "__main__":
