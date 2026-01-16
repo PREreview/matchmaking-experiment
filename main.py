@@ -51,28 +51,8 @@ def count_requests_per_server(requests_data):
     return server_counts
 
 
-def main():
-    requests_data = load_requests_data(Path("./prereview-data/requests.json"))
-    if requests_data is None:
-        return
-
-    count_requests_per_server(requests_data)
-
-    # Find the first DOI for a biorxiv request
-    doi = ""
-    for request in requests_data:
-        if request.get("server", "") == "biorxiv":
-            doi = request.get("preprint", "")
-            break
-
-    if not doi:
-        print("No DOI found for a biorxiv request.")
-        exit(1)
-
-    # Encode the DOI for safe URL usage
-    encoded_doi = quote(doi)
-    api_url = f"https://api.openalex.org/works/doi:{encoded_doi}"
-
+def fetch_frontmatter(doi):
+    api_url = f"https://api.openalex.org/works/doi:{quote(doi)}"
     try:
         response = requests.get(api_url, timeout=10)
         response.raise_for_status()
@@ -97,10 +77,31 @@ def main():
                 abstract = "Error reconstructing abstract"
         else:
             abstract = "No abstract available"
-        print(f"Title: {title}")
-        print(f"Abstract: {abstract}")
+        return {"doi": doi, "title": title, "abstract": abstract}
     except Exception as e:
         print(f"Failed to retrieve OpenAlex data for DOI {doi}: {e}")
+        return None
+
+
+def main():
+    requests_data = load_requests_data(Path("./prereview-data/requests.json"))
+    if requests_data is None:
+        return
+
+    count_requests_per_server(requests_data)
+
+    doi = requests_data[0].get("preprint", "")
+    if not doi:
+        print("no doi in request data")
+        exit(1)
+
+    result = fetch_frontmatter(doi)
+    if result is None:
+        print(f"Failed to fetch frontmatter for DOI {doi}")
+        exit(1)
+
+    print(f"Title: {result['title']}")
+    print(f"Abstract: {result['abstract']}")
 
 
 if __name__ == "__main__":
