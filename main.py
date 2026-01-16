@@ -5,6 +5,18 @@ from urllib.parse import quote
 
 import requests
 
+# Optional caching of HTTP requests to avoid repeated network calls.
+# Uses `requests_cache` if available; otherwise proceeds without caching.
+try:
+    import requests_cache
+
+    # Create (or reuse) a SQLite cache named "openalex_cache".
+    # Cached responses expire after 1 day (86400 seconds).
+    requests_cache.install_cache("openalex_cache", expire_after=86400)
+except ImportError:
+    # If requests_cache is not installed, the script will run without caching.
+    pass
+
 
 def load_requests_data(data_path: Path):
     """Load JSON data from the given path and return a list of records.
