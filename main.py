@@ -6,6 +6,7 @@ from urllib.parse import quote
 import duckdb
 import requests
 import requests_cache
+from fastembed import TextEmbedding  # FastEmbed for generating embeddings
 
 # cache requests
 try:
@@ -84,15 +85,27 @@ def fetch_frontmatter(doi):
         return None
 
 
-def store_frontmatter(conn, record):
-    """Insert a frontmatter record into the DuckDB table."""
+def embed_frontmatter(record, embedder):
+    """Create an embedding from title and abstract."""
+    text = f"{record.get('title', '')}\n{record.get('abstract', '')}"
+    try:
+        embedding = list(embedder.embed([text]))
+        print(embedding)
+        return embedding[0]
+    except Exception as e:
+        print(f"Failed to embed record for DOI {record.get('doi')}: {e}")
+        return None
+
+
+def store_frontmatter(conn, record, embedding):
+    """Insert a frontmatter record and its embedding into the DuckDB table."""
     try:
         conn.execute(
             """
-            INSERT INTO frontmatter (doi, title, abstract)
-            VALUES (?, ?, ?)
+            INSERT INTO frontmatter (doi, title, abstract, embedding)
+            VALUES (?, ?, ?, ?)
             """,
-            (record["doi"], record["title"], record["abstract"]),
+            (record["doi"], record["title"], record["abstract"], embedding),
         )
     except Exception as e:
         print(f"Failed to store record for DOI {record['doi']}: {e}")
@@ -113,10 +126,14 @@ def main():
         CREATE TABLE IF NOT EXISTS frontmatter (
             doi TEXT PRIMARY KEY,
             title TEXT,
-            abstract TEXT
+            abstract TEXT,
+            embedding DOUBLE[]  -- store vector as an array of doubles
         )
         """
     )
+
+    # Initialize FastEmbed model (you can choose a specific model if desired)
+    embedder = TextEmbedding(model_name="thenlper/gte-large")
 
     for idx, entry in enumerate(requests_data[:10]):
         doi = entry.get("preprint", "")
@@ -129,7 +146,12 @@ def main():
             print(f"[{idx}] Failed to fetch frontmatter for DOI {doi}")
             continue
 
-        store_frontmatter(duckdbconn, result)
+        embedding = embed_frontmatter(result, embedder)
+        if embedding is None:
+            print(f"[{idx}] Skipping storage due to embedding failure for DOI {doi}")
+            continue
+
+        store_frontmatter(duckdbconn, result, embedding)
 
     duckdbconn.close()
 
