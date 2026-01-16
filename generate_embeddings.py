@@ -137,6 +137,18 @@ def store_frontmatter(conn, frontmatter, embedding):
             print(f"Failed to store record for DOI {frontmatter['doi']}: {e}")
 
 
+def record_exists(conn, doi):
+    """Check whether a record with the given DOI already exists in the frontmatter table."""
+    try:
+        result = conn.execute(
+            "SELECT 1 FROM frontmatter WHERE doi = ?", (doi,)
+        ).fetchone()
+        return result is not None
+    except Exception as e:
+        print(f"Error checking existence of DOI {doi}: {e}")
+        return False
+
+
 def main():
     requests_data = load_requests_data(Path("./data/requests.json"))
     if requests_data is None:
@@ -165,6 +177,9 @@ def main():
         doi = entry.get("preprint", "")
         if not doi:
             print(f"[{idx}] No DOI in request data")
+            continue
+
+        if record_exists(duckdbconn, doi):
             continue
 
         frontmatter = fetch_frontmatter(doi)

@@ -5,7 +5,7 @@ import numpy as np
 from fastembed import TextEmbedding
 from flask import Flask, render_template_string, request
 
-from main import calc_embedding, fetch_frontmatter
+from generate_embeddings import calc_embedding, fetch_frontmatter
 
 app = Flask(__name__)
 
