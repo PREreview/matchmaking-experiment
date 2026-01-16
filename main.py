@@ -71,7 +71,25 @@ def main():
             response.raise_for_status()
             work_data = response.json()
             title = work_data.get("display_name") or work_data.get("title")
-            abstract = work_data.get("abstract_inverted_index")
+            abstract_inverted_index = work_data.get("abstract_inverted_index")
+
+            # Rebuild the abstract from the inverted index
+            if abstract_inverted_index:
+                try:
+                    max_pos = max(
+                        pos
+                        for positions in abstract_inverted_index.values()
+                        for pos in positions
+                    )
+                    abstract_tokens = [""] * (max_pos + 1)
+                    for term, positions in abstract_inverted_index.items():
+                        for pos in positions:
+                            abstract_tokens[pos] = term
+                    abstract = " ".join(abstract_tokens).strip()
+                except Exception:
+                    abstract = "Error reconstructing abstract"
+            else:
+                abstract = "No abstract available"
             print(f"Title: {title}")
             print(f"Abstract: {abstract}")
         except Exception as e:
