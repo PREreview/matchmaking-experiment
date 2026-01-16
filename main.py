@@ -47,6 +47,13 @@ def main():
 
     count_requests_per_server(requests_data)
 
+    doi = ""
+    for request in requests_data:
+        if request.get("server", "") == "biorxiv":
+            doi = request["preprint"]
+            break
+    print(doi)
+
 
 if __name__ == "__main__":
     main()
