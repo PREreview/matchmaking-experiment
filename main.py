@@ -85,12 +85,11 @@ def fetch_frontmatter(doi):
         return None
 
 
-def embed_frontmatter(record, embedder):
+def calc_embedding(record, embedder):
     """Create an embedding from title and abstract."""
     text = f"{record.get('title', '')}\n{record.get('abstract', '')}"
     try:
         embedding = list(embedder.embed([text]))
-        print(embedding)
         return embedding[0]
     except Exception as e:
         print(f"Failed to embed record for DOI {record.get('doi')}: {e}")
@@ -98,7 +97,9 @@ def embed_frontmatter(record, embedder):
 
 
 def store_frontmatter(conn, frontmatter, embedding):
-    """Insert a frontmatter record and its embedding into the DuckDB table."""
+    """Insert a frontmatter record and its embedding into the DuckDB table.
+    If a record with the same DOI already exists, update it instead of raising
+    an exception."""
     try:
         conn.execute(
             """
@@ -113,7 +114,27 @@ def store_frontmatter(conn, frontmatter, embedding):
             ),
         )
     except Exception as e:
-        print(f"Failed to store record for DOI {frontmatter['doi']}: {e}")
+        # If the insert fails due to a duplicate primary key, update the existing row.
+        err_msg = str(e).lower()
+        if "unique" in err_msg or "duplicate" in err_msg:
+            try:
+                conn.execute(
+                    """
+                    UPDATE frontmatter
+                    SET title = ?, abstract = ?, embedding = ?
+                    WHERE doi = ?
+                    """,
+                    (
+                        frontmatter["title"],
+                        frontmatter["abstract"],
+                        embedding,
+                        frontmatter["doi"],
+                    ),
+                )
+            except Exception as ue:
+                print(f"Failed to update record for DOI {frontmatter['doi']}: {ue}")
+        else:
+            print(f"Failed to store record for DOI {frontmatter['doi']}: {e}")
 
 
 def main():
@@ -140,7 +161,7 @@ def main():
     # Initialize FastEmbed model (you can choose a specific model if desired)
     embedder = TextEmbedding(model_name="thenlper/gte-large")
 
-    for idx, entry in enumerate(requests_data[:10]):
+    for idx, entry in enumerate(requests_data[:1000]):
         doi = entry.get("preprint", "")
         if not doi:
             print(f"[{idx}] No DOI in request data")
@@ -151,7 +172,7 @@ def main():
             print(f"[{idx}] Failed to fetch frontmatter for DOI {doi}")
             continue
 
-        embedding = embed_frontmatter(frontmatter, embedder)
+        embedding = calc_embedding(frontmatter, embedder)
         if embedding is None:
             print(f"[{idx}] Skipping storage due to embedding failure for DOI {doi}")
             continue
