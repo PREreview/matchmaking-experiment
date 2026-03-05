@@ -7,8 +7,11 @@ WORKDIR /app
 RUN python -m venv .venv
 COPY pyproject.toml ./
 RUN .venv/bin/pip install .
+
 FROM python:3.12-slim
 WORKDIR /app
 COPY --from=builder /app/.venv .venv/
-COPY . .
+COPY fastembed_cache ./fastembed_cache/
+COPY data ./data/
+COPY *.py .
 CMD ["/app/.venv/bin/flask", "run", "--host=0.0.0.0", "--port=8080"]
