@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import duckdb
-import numpy as np
 from fastembed import TextEmbedding
 from flask import Flask, render_template_string, request
 
@@ -60,23 +59,16 @@ def _find_similar(query_emb, limit=10):
         return []
     conn = duckdb.connect(database=str(db_path))
     try:
-        rows = conn.execute("SELECT doi, title, embedding FROM frontmatter").fetchall()
+        rows = conn.execute("""
+            SELECT doi, title
+            FROM frontmatter
+            WHERE embedding IS NOT NULL
+            ORDER BY list_distance(embedding, ?)
+            LIMIT ?
+        """, [query_emb, limit]).fetchall()
     finally:
         conn.close()
-    distances = []
-    q = np.array(query_emb, dtype=np.float64)
-    for doi, title, stored_emb in rows:
-        if stored_emb is None:
-            continue
-        try:
-            s = np.array(stored_emb, dtype=np.float64)
-            dist = np.linalg.norm(q - s)
-            distances.append((dist, doi, title))
-        except Exception:
-            continue
-    distances.sort(key=lambda x: x[0])
-    top = distances[:limit]
-    return [{"doi": d, "title": t} for _, d, t in top]
+    return [{"doi": d, "title": t} for d, t in rows]
 
 
 @app.route("/", methods=["GET"])
