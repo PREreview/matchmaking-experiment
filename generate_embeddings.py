@@ -159,21 +159,19 @@ def main():
     # Initialize DuckDB connection and ensure table exists
     db_path = Path("./data/frontmatter.duckdb")
     duckdbconn = duckdb.connect(database=str(db_path))
-    duckdbconn.execute(
-        """
+    duckdbconn.execute("""
         CREATE TABLE IF NOT EXISTS frontmatter (
             doi TEXT PRIMARY KEY,
             title TEXT,
             abstract TEXT,
             embedding DOUBLE[]  -- store vector as an array of doubles
         )
-        """
-    )
+        """)
 
     # Initialize FastEmbed model (you can choose a specific model if desired)
     embedder = TextEmbedding(model_name="thenlper/gte-large")
 
-    for idx, entry in enumerate(requests_data[:1000]):
+    for idx, entry in enumerate(requests_data):
         doi = entry.get("preprint", "")
         if not doi:
             print(f"[{idx}] No DOI in request data")
