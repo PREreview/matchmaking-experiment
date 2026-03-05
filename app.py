@@ -46,7 +46,11 @@ HTML_TEMPLATE = """
 </body>
 """
 
-_webapp_embedder = TextEmbedding(model_name="thenlper/gte-large")
+_webapp_embedder = TextEmbedding(
+    model_name="thenlper/gte-large",
+    cache_dir="./fastembed_cache",
+    local_files_only=True,
+)
 
 
 def _find_similar(query_emb, limit=10):
