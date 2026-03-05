@@ -22,7 +22,7 @@ HTML_TEMPLATE = """
   <main>
     <h1>Find related review requests</h1>
     <p>Find review requests for preprints similar to a given DOI.</p>
-    <form method="post" role="search">
+    <form method="get" role="search">
       <input type="text" name="doi" placeholder="Enter DOI" style="width:400px;" required>
       <button type="submit">Search</button>
     </form>
@@ -79,16 +79,16 @@ def _find_similar(query_emb, limit=10):
     return [{"doi": d, "title": t} for _, d, t in top]
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
     error = None
 
-    if request.method != "POST":
+    if not request.args.get("doi"):
         return render_template_string(
             HTML_TEMPLATE, results=None, error=None, query=None
         )
 
-    doi = request.form.get("doi", "").strip()
+    doi = request.args.get("doi", "").strip()
     if not doi:
         error = "Please provide a DOI."
         return render_template_string(
