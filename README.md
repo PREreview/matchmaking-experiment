@@ -1,5 +1,7 @@
 ## Experiment with embeddings for review requests
 
+`uv run download_model.py` to populate fastembed_cache (need for `fly deploy` to work)
+
 `uv run suggest.py` to run webserver that lets you find similar DOI
 
 `uv run generate_embeddings.py` to generate embeddings
