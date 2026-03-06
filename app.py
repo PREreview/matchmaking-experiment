@@ -20,18 +20,21 @@ HTML_TEMPLATE = """
 <body>
   <main>
     <h1>Find related review requests</h1>
-    <p>Find review requests for preprints similar to a given DOI.</p>
-    <form method="get" role="search">
-      <input type="text" name="doi" placeholder="Enter DOI" style="width:400px;" required>
+    <p>Find review requests for preprints similar to given DOIs.</p>
+    <form method="get">
+      <textarea name="dois" placeholder="Enter one DOI per line" rows="5" required>{{ dois_value }}</textarea>
       <button type="submit">Search</button>
     </form>
     {% if error %}
       <p style="color:red;">{{ error }}</p>
     {% endif %}
     {% if query %}
-      <h2>Searched DOI</h2>
-      <p><a href="https://doi.org/{{ query.doi }}" target="_blank">{{ query.doi }}</a></p>
-      <p>{{ query.title }}</p>
+      <h2>Searched DOIs</h2>
+      <ul>
+        {% for item in query.dois %}
+          <li><a href="https://doi.org/{{ item.doi }}" target="_blank">{{ item.doi }}</a> – {{ item.title }}</li>
+        {% endfor %}
+      </ul>
     {% endif %}
     {% if results %}
       <h2>Top 10 related review requests</h2>
@@ -59,13 +62,16 @@ def _find_similar(query_emb, limit=10):
         return []
     conn = duckdb.connect(database=str(db_path))
     try:
-        rows = conn.execute("""
+        rows = conn.execute(
+            """
             SELECT doi, title
             FROM frontmatter
             WHERE embedding IS NOT NULL
             ORDER BY list_distance(embedding, ?)
             LIMIT ?
-        """, [query_emb, limit]).fetchall()
+        """,
+            [query_emb, limit],
+        ).fetchall()
     finally:
         conn.close()
     return [{"doi": d, "title": t} for d, t in rows]
@@ -75,38 +81,65 @@ def _find_similar(query_emb, limit=10):
 def index():
     error = None
 
-    if not request.args.get("doi"):
+    dois_arg = request.args.get("dois", "").strip()
+    if not dois_arg:
         return render_template_string(
-            HTML_TEMPLATE, results=None, error=None, query=None
+            HTML_TEMPLATE, results=None, error=None, query=None, dois_value=""
         )
 
-    doi = request.args.get("doi", "").strip()
-    if not doi:
-        error = "Please provide a DOI."
+    dois_raw = [
+        d.strip()
+        for d in dois_arg.replace(",", " ").replace("\n", " ").split()
+        if d.strip()
+    ]
+    if not dois_raw:
+        error = "Please provide at least one DOI."
         return render_template_string(
-            HTML_TEMPLATE, results=None, error=error, query=None
+            HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
         )
 
-    front = fetch_frontmatter(doi)
-    if not front:
-        error = f"No entry found for DOI {doi}."
+    failed_dois = []
+    successful_frontmatters = []
+    for doi in dois_raw:
+        front = fetch_frontmatter(doi)
+        if not front:
+            failed_dois.append(doi)
+        else:
+            successful_frontmatters.append(front)
+
+    if failed_dois:
+        error = f"Could not retrieve frontmatter for the following entries. Please remove or fix them. {', '.join(failed_dois)}"
         return render_template_string(
-            HTML_TEMPLATE, results=None, error=error, query=None
+            HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
         )
 
-    emb = calc_embedding(front, _webapp_embedder)
-    if emb is None:
+    combined_text = "\n\n".join(
+        [f"{f['title']}\n{f['abstract']}" for f in successful_frontmatters]
+    )
+    query_emb = calc_embedding(
+        {"title": combined_text, "abstract": ""}, _webapp_embedder
+    )
+    if query_emb is None:
         error = "Failed to compute embedding."
         return render_template_string(
-            HTML_TEMPLATE, results=None, error=error, query=None
+            HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
         )
 
-    results = _find_similar(emb, limit=10)
+    results = _find_similar(query_emb, limit=10)
     if not results:
         error = "No similar entries found."
-    query_info = {"doi": doi, "title": front.get("title", "")}
+    query_info = {
+        "dois": [
+            {"doi": f["doi"], "title": f.get("title", "")}
+            for f in successful_frontmatters
+        ]
+    }
     return render_template_string(
-        HTML_TEMPLATE, results=results, error=error, query=query_info
+        HTML_TEMPLATE,
+        results=results,
+        error=error,
+        query=query_info,
+        dois_value=dois_arg,
     )
 
 
