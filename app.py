@@ -127,6 +127,12 @@ def static_assets(filename):
     return send_from_directory(static_dir, filename)
 
 
+@app.route("/robots.txt")
+def robots_txt():
+    """Serve robots.txt to disallow all crawlers."""
+    return "User-agent: *\nDisallow: /", 200, {"Content-Type": "text/plain"}
+
+
 @app.route("/", methods=["GET"])
 def index():
     error = None
