@@ -17,32 +17,35 @@ HTML_TEMPLATE = """
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css"
   >
-  <title>Related Review Requests</title>
+  <title>PREreview Matchmaking Experiment</title>
 </head>
 <body>
   <main>
-    <h1>Find related review requests</h1>
-    <p>Find review requests for preprints similar to given DOIs.</p>
+    <header>
+        <h1>Matchmaking Experiment</h1>
+        <p>Find preprints looking for reviewers.</p>
+    <header>
     <form method="get">
+      <label for=dois>One or more DOIs. Place each DOI on a separate line.</label>
       <textarea name="dois" placeholder="Enter one DOI per line" rows="5" required>{{ dois_value }}</textarea>
-      <button type="submit">Search</button>
+      <button type="submit">Find related preprints</button>
     </form>
     {% if error %}
       <p style="color:red;">{{ error }}</p>
     {% endif %}
     {% if query %}
-      <h2>Searched DOIs</h2>
+      <h2>Your Input</h2>
       <ul>
         {% for item in query.dois %}
-          <li><a href="https://doi.org/{{ item.doi }}" target="_blank">{{ item.doi }}</a> – {{ item.title }}</li>
+          <li>{{ item.title }}<br><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
         {% endfor %}
       </ul>
     {% endif %}
     {% if results %}
-      <h2>Top 10 related review requests</h2>
+      <h2>Related preprints looking for review</h2>
       <ul>
         {% for item in results %}
-          <li><a href="https://doi.org/{{ item.doi }}" target="_blank">{{ item.doi }}</a> – {{ item.title }}</li>
+          <li>{{ item.title }}<br><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
         {% endfor %}
       </ul>
     {% endif %}
