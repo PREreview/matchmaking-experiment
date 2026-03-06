@@ -6,6 +6,8 @@ from flask import Flask, render_template_string, request
 
 from generate_embeddings import calc_embedding, fetch_frontmatter
 
+DB_PATH = Path("./data/frontmatter.duckdb")
+
 app = Flask(__name__)
 
 HTML_TEMPLATE = """
@@ -57,11 +59,17 @@ _webapp_embedder = TextEmbedding(
 
 def _find_similar(query_emb, limit=10):
     """Return up to `limit` records with the smallest Euclidean distance to `query_emb`."""
-    db_path = Path("./data/frontmatter.duckdb")
-    if not db_path.is_file():
+    DB_PATH = Path("./data/frontmatter.duckdb")
+    if not DB_PATH.is_file():
         return []
-    conn = duckdb.connect(database=str(db_path))
+    conn = duckdb.connect(database=str(DB_PATH))
     try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS query_embeddings (
+                query TEXT PRIMARY KEY,
+                embedding DOUBLE[]
+            )
+        """)
         rows = conn.execute(
             """
             SELECT doi, title
@@ -75,6 +83,36 @@ def _find_similar(query_emb, limit=10):
     finally:
         conn.close()
     return [{"doi": d, "title": t} for d, t in rows]
+
+
+def _get_query_embedding(query_key):
+    """Return cached embedding for query from query_embeddings table, or None if not found."""
+    DB_PATH = Path("./data/frontmatter.duckdb")
+    if not DB_PATH.is_file():
+        return None
+    conn = duckdb.connect(database=str(DB_PATH))
+    try:
+        row = conn.execute(
+            "SELECT embedding FROM query_embeddings WHERE query = ?", (query_key,)
+        ).fetchone()
+        return row[0] if row else None
+    finally:
+        conn.close()
+
+
+def _save_query_embedding(query_key, emb):
+    """Store computed embedding in query_embeddings table."""
+    DB_PATH = Path("./data/frontmatter.duckdb")
+    if not DB_PATH.is_file():
+        return
+    conn = duckdb.connect(database=str(DB_PATH))
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO query_embeddings (query, embedding) VALUES (?, ?)",
+            (query_key, emb),
+        )
+    finally:
+        conn.close()
 
 
 @app.route("/", methods=["GET"])
@@ -113,27 +151,40 @@ def index():
             HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
         )
 
-    combined_text = "\n\n".join(
-        [f"{f['title']}\n{f['abstract']}" for f in successful_frontmatters]
-    )
-    query_emb = calc_embedding(
-        {"title": combined_text, "abstract": ""}, _webapp_embedder
-    )
+    dois_raw.sort()
+    query_key = "|".join(dois_raw)
+    query_emb = _get_query_embedding(query_key)
+
     if query_emb is None:
-        error = "Failed to compute embedding."
-        return render_template_string(
-            HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
+        combined_text = "\n\n".join(
+            [f"{f['title']}\n{f['abstract']}" for f in successful_frontmatters]
         )
+        query_emb = calc_embedding(
+            {"title": combined_text, "abstract": ""}, _webapp_embedder
+        )
+        if query_emb is None:
+            error = "Failed to compute embedding."
+            return render_template_string(
+                HTML_TEMPLATE,
+                results=None,
+                error=error,
+                query=None,
+                dois_value=dois_arg,
+            )
+
+        _save_query_embedding(query_key, query_emb)
 
     results = _find_similar(query_emb, limit=10)
     if not results:
         error = "No similar entries found."
+
     query_info = {
         "dois": [
-            {"doi": f["doi"], "title": f.get("title", "")}
-            for f in successful_frontmatters
+            {"doi": doi, "title": (fetch_frontmatter(doi) or {}).get("title", "")}
+            for doi in dois_raw
         ]
     }
+
     return render_template_string(
         HTML_TEMPLATE,
         results=results,
@@ -144,4 +195,18 @@ def index():
 
 
 if __name__ == "__main__":
+    if not DB_PATH.is_file():
+        print(f"failed to connect to duckdb file at: {DB_PATH}")
+        os.exit(1)
+    conn = duckdb.connect(database=str(DB_PATH))
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS query_embeddings (
+                query TEXT PRIMARY KEY,
+                embedding DOUBLE[]
+            )
+        """)
+    finally:
+        conn.close()
+
     app.run(host="0.0.0.0", port=8080, debug=True)
