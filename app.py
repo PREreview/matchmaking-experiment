@@ -18,6 +18,12 @@ HTML_TEMPLATE = """
 </head>
 <body>
   <main>
+    {% if error %}
+    <div class="error">
+      <h2>There is a problem</h2>
+      <p>{{ error }}</p>
+    </div>
+    {% endif %}
     <header>
         <h1>Matchmaking Experiment</h1>
         <p>Find preprints looking for reviewers.</p>
@@ -27,9 +33,6 @@ HTML_TEMPLATE = """
       <textarea name="dois" placeholder="Enter one DOI per line" rows="5" required>{{ dois_value }}</textarea>
       <button type="submit">Find related preprints</button>
     </form>
-    {% if error %}
-      <p style="color:red;">{{ error }}</p>
-    {% endif %}
     {% if query %}
       <h2>Your Input</h2>
       <ul>

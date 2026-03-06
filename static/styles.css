@@ -133,3 +133,8 @@ li {
     text-decoration: underline;
   }
 }
+
+.error {
+  border: 5px solid var(--color-red-700);
+  padding: var(--space-s);
+}
