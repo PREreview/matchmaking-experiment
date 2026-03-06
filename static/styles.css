@@ -1,0 +1,135 @@
+:root {
+  --color-white: #fefefe;
+  --color-black-900: #0b0b0b;
+  --color-black-800: #181818;
+  --color-black-200: #686868;
+  --color-black-30: #dbdbdb;
+  --color-black-10: #f5f5f5;
+  --color-red-700: #a90012;
+  --color-red-600: #e4002c;
+  --color-red-200: #ee435b;
+  --color-red-60: #fca2a9;
+  --color-blue-90: #09f;
+  --color-blue-50: #a9c5ff;
+  --color-yellow-40: #fc0;
+  --color-yellow-20: #f8e9b3;
+  --color-green-400: #23660b;
+  --color-green-50: #88dd83;
+  --space-4xs: clamp(0.125rem, 0.1002rem + 0.1126vw, 0.1875rem);
+  --space-3xs: clamp(0.25rem, 0.2252rem + 0.1126vw, 0.3125rem);
+  --space-2xs: clamp(0.5rem, 0.4505rem + 0.2252vw, 0.625rem);
+  --space-xs: clamp(0.75rem, 0.6757rem + 0.3378vw, 0.9375rem);
+  --space-s: clamp(1rem, 0.9009rem + 0.4505vw, 1.25rem);
+  --space-m: clamp(1.5rem, 1.3514rem + 0.6757vw, 1.875rem);
+  --space-l: clamp(2rem, 1.8018rem + 0.9009vw, 2.5rem);
+  --space-xl: clamp(3rem, 2.7027rem + 1.3514vw, 3.75rem);
+  --space-2xl: clamp(4rem, 3.6036rem + 1.8018vw, 5rem);
+  --space-3xl: clamp(6rem, 5.4054rem + 2.7027vw, 7.5rem);
+  --space-4xs-3xs: clamp(0.125rem, 0.0507rem + 0.3378vw, 0.3125rem);
+  --space-3xs-2xs: clamp(0.25rem, 0.1014rem + 0.6757vw, 0.625rem);
+  --space-2xs-xs: clamp(0.5rem, 0.3266rem + 0.7883vw, 0.9375rem);
+  --space-xs-s: clamp(0.75rem, 0.5518rem + 0.9009vw, 1.25rem);
+  --space-s-m: clamp(1rem, 0.6532rem + 1.5766vw, 1.875rem);
+  --space-m-l: clamp(1.5rem, 1.1036rem + 1.8018vw, 2.5rem);
+  --space-l-xl: clamp(2rem, 1.3063rem + 3.1532vw, 3.75rem);
+  --space-xl-2xl: clamp(3rem, 2.2072rem + 3.6036vw, 5rem);
+  --space-2xl-3xl: clamp(4rem, 2.6126rem + 6.3063vw, 7.5rem);
+  --space-2xs-s: clamp(0.5rem, 0.2027rem + 1.3514vw, 1.25rem);
+  --space-xs-m: clamp(0.75rem, 0.3041rem + 2.027vw, 1.875rem);
+  --space-s-l: clamp(1rem, 0.4054rem + 2.7027vw, 2.5rem);
+  --space-m-xl: clamp(1.5rem, 0.6081rem + 4.0541vw, 3.75rem);
+  --step--2: clamp(0.7901rem, 0.7592rem + 0.1404vw, 0.8681rem);
+  --step--1: clamp(0.8889rem, 0.8283rem + 0.2753vw, 1.0417rem);
+  --step-0: clamp(1rem, 0.9009rem + 0.4505vw, 1.25rem);
+  --step-1: clamp(1.125rem, 0.9764rem + 0.6757vw, 1.5rem);
+  --step-2: clamp(1.2656rem, 1.0538rem + 0.9628vw, 1.8rem);
+  --step-3: clamp(1.4238rem, 1.132rem + 1.3264vw, 2.16rem);
+  --step-4: clamp(1.6018rem, 1.2093rem + 1.7841vw, 2.592rem);
+  --step-5: clamp(1.802rem, 1.2834rem + 2.3574vw, 3.1104rem);
+}
+
+body {
+  background-color: var(--color-white);
+  color: var(--color-black-900);
+  font-size: var(--step-0);
+  font-family:
+    "IBM Plex Sans",
+    ui-sans-serif,
+    Segoe UI,
+    Roboto,
+    Ubuntu,
+    Cantarell,
+    Noto Sans,
+    -apple-system,
+    "Segoe UI",
+    "Roboto",
+    "Helvetica Neue",
+    "Noto Sans",
+    "Liberation Sans",
+    "Arial",
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji";
+}
+
+main {
+  max-width: 70ch;
+  margin-inline: auto;
+  margin-block: var(--space-l);
+  padding: var(--space-s);
+}
+
+header {
+  margin-block-end: var(--space-xl);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  margin-block-end: var(--space-2xl);
+
+  label {
+    color: var(--color-black-200);
+    margin-block-end: var(--space-3xs);
+  }
+
+  textarea {
+    margin-block-end: var(--space-xs);
+  }
+}
+
+button {
+  padding: var(--space-2xs) var(--space-xs);
+  background-color: var(--color-red-600);
+  border: 0;
+  border-radius: 20px;
+  font-size: var(--step-1);
+  font-weight: bold;
+  color: var(--color-white);
+  line-height: 1.5;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin-block-end: var(--space-2xl);
+}
+
+li {
+  margin-block-end: var(--space-s);
+
+  p {
+    margin-block-end: var(--space-3xs);
+  }
+
+  a {
+    color: var(--color-black-200);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+}

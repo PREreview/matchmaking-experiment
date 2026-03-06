@@ -13,10 +13,7 @@ app = Flask(__name__)
 HTML_TEMPLATE = """
 <!doctype html>
 <head>
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css"
-  >
+  <link rel="stylesheet" href="/static/styles.css">
   <title>PREreview Matchmaking Experiment</title>
 </head>
 <body>
@@ -24,7 +21,7 @@ HTML_TEMPLATE = """
     <header>
         <h1>Matchmaking Experiment</h1>
         <p>Find preprints looking for reviewers.</p>
-    <header>
+    </header>
     <form method="get">
       <label for=dois>One or more DOIs. Place each DOI on a separate line.</label>
       <textarea name="dois" placeholder="Enter one DOI per line" rows="5" required>{{ dois_value }}</textarea>
@@ -37,7 +34,7 @@ HTML_TEMPLATE = """
       <h2>Your Input</h2>
       <ul>
         {% for item in query.dois %}
-          <li>{{ item.title }}<br><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
+          <li><p>{{ item.title }}</p><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
         {% endfor %}
       </ul>
     {% endif %}
@@ -45,7 +42,7 @@ HTML_TEMPLATE = """
       <h2>Related preprints looking for review</h2>
       <ul>
         {% for item in results %}
-          <li>{{ item.title }}<br><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
+          <li><p>{{ item.title }}</p><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
         {% endfor %}
       </ul>
     {% endif %}
@@ -116,6 +113,15 @@ def _save_query_embedding(query_key, emb):
         )
     finally:
         conn.close()
+
+
+@app.route("/static/<path:filename>")
+def static_assets(filename):
+    """
+    Return a file from the ./static directory.
+    """
+    static_dir = Path(__file__).parent / "static"
+    return send_from_directory(static_dir, filename)
 
 
 @app.route("/", methods=["GET"])
