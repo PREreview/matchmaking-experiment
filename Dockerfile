@@ -13,5 +13,6 @@ WORKDIR /app
 COPY --from=builder /app/.venv .venv/
 COPY fastembed_cache ./fastembed_cache/
 COPY data ./data/
+COPY static ./static/
 COPY *.py .
 CMD ["/app/.venv/bin/flask", "run", "--host=0.0.0.0", "--port=8080"]
