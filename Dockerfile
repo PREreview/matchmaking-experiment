@@ -15,4 +15,4 @@ COPY fastembed_cache ./fastembed_cache/
 COPY data ./data/
 COPY static ./static/
 COPY *.py .
-CMD ["/app/.venv/bin/flask", "run", "--host=0.0.0.0", "--port=8080"]
+CMD ["/app/.venv/bin/gunicorn", "--bind=0.0.0.0:8080", "app:app"]
