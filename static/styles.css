@@ -111,26 +111,34 @@ button {
   line-height: 1.5;
 }
 
-ul {
+p {
+  margin-block-end: 0;
+}
+
+p + ul {
+  margin-block-start: var(--space-3xs);
+}
+
+.list-of-works {
   list-style: none;
   padding: 0;
   margin-block-end: var(--space-2xl);
-}
 
-li {
-  margin-block-end: var(--space-s);
+  li {
+    margin-block-end: var(--space-s);
 
-  p {
-    margin-block-end: var(--space-3xs);
-  }
+    p {
+      margin-block-end: var(--space-3xs);
+    }
 
-  a {
-    color: var(--color-black-200);
-    text-decoration: none;
-  }
+    a {
+      color: var(--color-black-200);
+      text-decoration: none;
+    }
 
-  a:hover {
-    text-decoration: underline;
+    a:hover {
+      text-decoration: underline;
+    }
   }
 }
 

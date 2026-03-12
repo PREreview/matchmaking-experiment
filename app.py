@@ -25,8 +25,16 @@ HTML_TEMPLATE = """
     </div>
     {% endif %}
     <header>
-        <h1>Matchmaking Experiment</h1>
+        <h1>PREreview Matchmaking Experiment</h1>
         <p>Find preprints looking for reviewers.</p>
+        <p>We receive requests for review by preprint authors. This experiment is about helping you find interesting preprints looking for review.</p>
+        <p>Give us a list of DOIs and we will find preprints with requests for review that are similar.</p>
+        <p>You could include DOIs that are:</p>
+        <ul>
+            <li>your own preprints and journal articles</li>
+            <li>works you have reviewed</li>
+            <li>works you found interesting</li>
+        </ul>
     </header>
     <form method="get">
       <label for=dois>One or more DOIs. Place each DOI on a separate line.</label>
@@ -35,7 +43,7 @@ HTML_TEMPLATE = """
     </form>
     {% if query %}
       <h2>Your Input</h2>
-      <ul>
+      <ul class="list-of-works">
         {% for item in query.dois %}
           <li><p>{{ item.title }}</p><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
         {% endfor %}
@@ -43,7 +51,7 @@ HTML_TEMPLATE = """
     {% endif %}
     {% if results %}
       <h2>Related preprints looking for review</h2>
-      <ul>
+      <ul class="list-of-works">
         {% for item in results %}
           <li><p>{{ item.title }}</p><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
         {% endfor %}
