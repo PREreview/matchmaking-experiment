@@ -13,4 +13,5 @@ container:
 .PHONY: deploy
 deploy:
 	uv run download_model.py
+	fly machine start
 	fly deploy
