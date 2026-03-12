@@ -27,6 +27,13 @@ primary_region = 'lhr'
   timeout = "1s"
   path = "/"
 
+[[http_service.machine_checks]]
+  image = "curlimages/curl"
+  entrypoint = ["/bin/sh", "-c"]
+  command = ["curl --fail --retry-delay 5 --retry 1000 --retry-connrefused http://[$FLY_TEST_MACHINE_IP]:8080"]
+  kill_signal = "SIGKILL"
+  kill_timeout = "5m"
+
 [[vm]]
   memory = '2gb'
   cpus = 1
