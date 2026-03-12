@@ -15,4 +15,4 @@ COPY fastembed_cache ./fastembed_cache/
 COPY data ./data/
 COPY static ./static/
 COPY *.py .
-CMD ["/app/.venv/bin/gunicorn", "--bind=0.0.0.0:8080", "app:app"]
+CMD ["/app/.venv/bin/gunicorn", "--bind=0.0.0.0:8080", "--access-logfile=-", "app:app"]
