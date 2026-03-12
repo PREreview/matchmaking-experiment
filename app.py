@@ -26,7 +26,6 @@ HTML_TEMPLATE = """
     {% endif %}
     <header>
         <h1>PREreview Matchmaking Experiment</h1>
-        <p>Find preprints looking for reviewers.</p>
         <p>We receive requests for review by preprint authors. This experiment is about helping you find interesting preprints looking for review.</p>
         <p>Give us a list of DOIs and we will find preprints with requests for review that are similar.</p>
         <p>You could include DOIs that are:</p>
@@ -39,7 +38,7 @@ HTML_TEMPLATE = """
     <form method="get">
       <label for=dois>One or more DOIs. Place each DOI on a separate line.</label>
       <textarea name="dois" placeholder="Enter one DOI per line" rows="5" required>{{ dois_value }}</textarea>
-      <button type="submit">Find related preprints</button>
+      <button type="submit">Find preprints looking for a review</button>
     </form>
     {% if query %}
       <h2>Your Input</h2>
