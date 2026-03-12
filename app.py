@@ -53,7 +53,7 @@ HTML_TEMPLATE = """
       <h2>Related preprints looking for review</h2>
       <ul class="list-of-works">
         {% for item in results %}
-          <li><p>{{ item.title }}</p><a href="https://doi.org/{{ item.doi }}">{{ item.doi }}</a></li>
+          <li><p>{{ item.title }}</p><a href="{{ item.url }}">{{ item.doi }}</a></li>
         {% endfor %}
       </ul>
     {% endif %}
@@ -93,7 +93,11 @@ def _find_similar(query_emb, limit=10):
         ).fetchall()
     finally:
         conn.close()
-    return [{"doi": d, "title": t} for d, t in rows]
+    return [{"doi": d, "url": _to_prereview_url(d), "title": t} for d, t in rows]
+
+
+def _to_prereview_url(doi: str):
+    return 'https://prereview.org/preprints/doi-' + doi.lower().replace('-', '+').replace('/', '-')
 
 
 def _get_query_embedding(query_key):
