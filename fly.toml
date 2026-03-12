@@ -9,7 +9,8 @@ primary_region = 'lhr'
 [build]
 
 [deploy]
-  strategy = 'bluegreen'
+  strategy = "rolling"
+  max_unavailable = 1
 
 [http_service]
   internal_port = 8080
@@ -29,3 +30,4 @@ primary_region = 'lhr'
 [[vm]]
   memory = '2gb'
   cpus = 1
+  cpu_kind = "performance"
