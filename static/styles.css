@@ -142,6 +142,16 @@ p + ul {
   }
 }
 
+.ask-for-feedback {
+  border-inline-start: solid 3px var(--color-blue-90);
+  padding-inline-start: var(--space-xs);
+  padding-block: var(--space-2xs);
+
+  :first-child {
+    margin-block-start: 0;
+  }
+}
+
 .error {
   border: 5px solid var(--color-red-700);
   padding: var(--space-s);

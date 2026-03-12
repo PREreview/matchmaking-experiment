@@ -51,6 +51,11 @@ HTML_TEMPLATE = """
     {% endif %}
     {% if results %}
       <h2>Related preprints looking for review</h2>
+      <div class="ask-for-feedback">
+        <p>These are real requests for review by the preprint authors.</p>
+        <p>We'd love hear how relevant these results are to you. This is an experiment, so all feedback is valuable to us, regardless of whether you found the results relevant or not.</p>
+        <p><a href="mailto:help@prereview.org">Email us</a></p>
+      </div>
       <ul class="list-of-works">
         {% for item in results %}
           <li><p>{{ item.title }}</p><a href="{{ item.url }}">{{ item.doi }}</a></li>
@@ -97,7 +102,9 @@ def _find_similar(query_emb, limit=10):
 
 
 def _to_prereview_url(doi: str):
-    return 'https://prereview.org/preprints/doi-' + doi.lower().replace('-', '+').replace('/', '-')
+    return "https://prereview.org/preprints/doi-" + doi.lower().replace(
+        "-", "+"
+    ).replace("/", "-")
 
 
 def _get_query_embedding(query_key):
