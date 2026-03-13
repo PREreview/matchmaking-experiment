@@ -10,6 +10,10 @@ prod: container
 container:
 	docker build -t matchmaking-experiment .
 
+.PHONY: generate-embeddings
+generate-embeddings:
+	uv run generate_embeddings.py
+
 .PHONY: deploy
 deploy:
 	uv run download_model.py
