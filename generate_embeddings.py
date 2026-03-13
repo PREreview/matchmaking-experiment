@@ -38,21 +38,6 @@ def load_requests_data(data_path: Path):
     return data
 
 
-def count_requests_per_server(requests_data):
-    """Count entries per 'server' and print the results."""
-    # Extract server values from records that contain the key
-    servers = [rec["server"] for rec in requests_data if "server" in rec]
-    # Compute counts
-    server_counts = Counter(servers)
-
-    # Print the results
-    print("Requests per server:")
-    for server, count in server_counts.items():
-        print(f"{server}: {count}")
-    print("\n")
-    return server_counts
-
-
 def fetch_frontmatter(doi):
     api_url = f"https://api.openalex.org/works/doi:{quote(doi)}"
     try:
@@ -153,8 +138,6 @@ def main():
     requests_data = load_requests_data(Path("./data/requests.json"))
     if requests_data is None:
         return
-
-    count_requests_per_server(requests_data)
 
     # Initialize DuckDB connection and ensure table exists
     db_path = Path("./data/frontmatter.duckdb")
