@@ -4,8 +4,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 import duckdb
+import os
 import requests
 import requests_cache
+from dotenv import load_dotenv
 from fastembed import TextEmbedding  # FastEmbed for generating embeddings
 
 # cache requests
@@ -135,7 +137,14 @@ def record_exists(conn, doi):
 
 
 def main():
-    requests_data = load_requests_data(Path("./data/requests.json"))
+
+    load_dotenv()
+    token = os.getenv("PREREVIEW_REQUEST_DATA_API_TOKEN")
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get("https://prereview.org/requests-data", headers=headers)
+    response.raise_for_status()
+    requests_data = response.json()
+
     if requests_data is None:
         return
 
@@ -155,7 +164,7 @@ def main():
     embedder = TextEmbedding(model_name="thenlper/gte-large")
 
     for idx, entry in enumerate(requests_data):
-        doi = entry.get("preprint", "")
+        doi = entry.get("preprint", "").strip("doi:")
         if not doi:
             print(f"[{idx}] No DOI in request data")
             continue
