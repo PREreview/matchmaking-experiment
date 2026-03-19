@@ -183,7 +183,7 @@ def main():
 
         if isWithdrawn(frontmatter):
             print(
-                f"skipping {entry.requestId} due to withdrawn in title: {frontmatter["title"]}"
+                f"skipping {entry["requestId"]} due to withdrawn in title: {frontmatter["title"]}"
             )
             continue
 
