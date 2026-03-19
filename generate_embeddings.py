@@ -167,7 +167,12 @@ def main():
     # Initialize FastEmbed model (you can choose a specific model if desired)
     embedder = TextEmbedding(model_name="thenlper/gte-large")
 
+    total = len(requests_data)
     for idx, entry in enumerate(requests_data):
+        if (idx + 1) % 500 == 0:
+            percentage = ((idx + 1) / total) * 100
+            print(f"{idx + 1} requests processed ({percentage:.0f}%)")
+
         doi = entry.get("preprint", "").strip("doi:")
         if not doi:
             print(f"[{idx}] No DOI in request data")
