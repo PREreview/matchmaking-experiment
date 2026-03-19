@@ -52,7 +52,7 @@ HTML_TEMPLATE = """
       <h2>Related preprints looking for review</h2>
       <div class="ask-for-feedback">
         <p>These are real requests for review by the preprint authors.</p>
-        <p>The closest match is at the top. We have included ten results.</p>
+        <p>The closest match is at the top. We have included ten results. The matching is currently optimized for English.</p>
         <p>We'd love hear how relevant these results are to you. This is an experiment, so all feedback is valuable to us, regardless of whether you found the results relevant or not. We are also keen to know how you chose your input DOIs.</p>
         <p><a href="mailto:help@prereview.org">Email us</a></p>
       </div>
