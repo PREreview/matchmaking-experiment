@@ -8,7 +8,6 @@ from generate_embeddings import calc_embedding, fetch_frontmatter
 
 DB_PATH = Path("./data/frontmatter.duckdb")
 
-app = Flask(__name__)
 
 HTML_TEMPLATE = """
 <!doctype html>
@@ -137,101 +136,7 @@ def _save_query_embedding(query_key, emb):
         conn.close()
 
 
-@app.route("/static/<path:filename>")
-def static_assets(filename):
-    """
-    Return a file from the ./static directory.
-    """
-    static_dir = Path(__file__).parent / "static"
-    return send_from_directory(static_dir, filename)
-
-
-@app.route("/robots.txt")
-def robots_txt():
-    """Serve robots.txt to disallow all crawlers."""
-    return "User-agent: *\nDisallow: /", 200, {"Content-Type": "text/plain"}
-
-
-@app.route("/", methods=["GET"])
-def index():
-    error = None
-
-    dois_arg = request.args.get("dois", "").strip()
-    if not dois_arg:
-        return render_template_string(
-            HTML_TEMPLATE, results=None, error=None, query=None, dois_value=""
-        )
-
-    dois_raw = [
-        d.strip()
-        for d in dois_arg.replace(",", " ").replace("\n", " ").split()
-        if d.strip()
-    ]
-    if not dois_raw:
-        error = "Please provide at least one DOI."
-        return render_template_string(
-            HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
-        )
-
-    failed_dois = []
-    successful_frontmatters = []
-    for doi in dois_raw:
-        front = fetch_frontmatter(doi)
-        if not front:
-            failed_dois.append(doi)
-        else:
-            successful_frontmatters.append(front)
-
-    if failed_dois:
-        error = f"Could not retrieve frontmatter for the following entries. Please remove or fix them. {', '.join(failed_dois)}"
-        return render_template_string(
-            HTML_TEMPLATE, results=None, error=error, query=None, dois_value=dois_arg
-        )
-
-    dois_raw.sort()
-    query_key = "|".join(dois_raw)
-    query_emb = _get_query_embedding(query_key)
-
-    if query_emb is None:
-        combined_text = "\n\n".join(
-            [f"{f['title']}\n{f['abstract']}" for f in successful_frontmatters]
-        )
-        query_emb = calc_embedding(
-            {"title": combined_text, "abstract": ""}, _webapp_embedder
-        )
-        if query_emb is None:
-            error = "Failed to compute embedding."
-            return render_template_string(
-                HTML_TEMPLATE,
-                results=None,
-                error=error,
-                query=None,
-                dois_value=dois_arg,
-            )
-
-        _save_query_embedding(query_key, query_emb)
-
-    results = _find_similar(query_emb, limit=10)
-    if not results:
-        error = "No similar entries found."
-
-    query_info = {
-        "dois": [
-            {"doi": doi, "title": (fetch_frontmatter(doi) or {}).get("title", "")}
-            for doi in dois_raw
-        ]
-    }
-
-    return render_template_string(
-        HTML_TEMPLATE,
-        results=results,
-        error=error,
-        query=query_info,
-        dois_value=dois_arg,
-    )
-
-
-if __name__ == "__main__":
+def create_app():
     if not DB_PATH.is_file():
         print(f"failed to connect to duckdb file at: {DB_PATH}")
         os.exit(1)
@@ -246,4 +151,110 @@ if __name__ == "__main__":
     finally:
         conn.close()
 
+    app = Flask(__name__)
+
+    @app.route("/static/<path:filename>")
+    def static_assets(filename):
+        """
+        Return a file from the ./static directory.
+        """
+        static_dir = Path(__file__).parent / "static"
+        return send_from_directory(static_dir, filename)
+
+    @app.route("/robots.txt")
+    def robots_txt():
+        """Serve robots.txt to disallow all crawlers."""
+        return "User-agent: *\nDisallow: /", 200, {"Content-Type": "text/plain"}
+
+    @app.route("/", methods=["GET"])
+    def index():
+        error = None
+
+        dois_arg = request.args.get("dois", "").strip()
+        if not dois_arg:
+            return render_template_string(
+                HTML_TEMPLATE, results=None, error=None, query=None, dois_value=""
+            )
+
+        dois_raw = [
+            d.strip()
+            for d in dois_arg.replace(",", " ").replace("\n", " ").split()
+            if d.strip()
+        ]
+        if not dois_raw:
+            error = "Please provide at least one DOI."
+            return render_template_string(
+                HTML_TEMPLATE,
+                results=None,
+                error=error,
+                query=None,
+                dois_value=dois_arg,
+            )
+
+        failed_dois = []
+        successful_frontmatters = []
+        for doi in dois_raw:
+            front = fetch_frontmatter(doi)
+            if not front:
+                failed_dois.append(doi)
+            else:
+                successful_frontmatters.append(front)
+
+        if failed_dois:
+            error = f"Could not retrieve frontmatter for the following entries. Please remove or fix them. {', '.join(failed_dois)}"
+            return render_template_string(
+                HTML_TEMPLATE,
+                results=None,
+                error=error,
+                query=None,
+                dois_value=dois_arg,
+            )
+
+        dois_raw.sort()
+        query_key = "|".join(dois_raw)
+        query_emb = _get_query_embedding(query_key)
+
+        if query_emb is None:
+            combined_text = "\n\n".join(
+                [f"{f['title']}\n{f['abstract']}" for f in successful_frontmatters]
+            )
+            query_emb = calc_embedding(
+                {"title": combined_text, "abstract": ""}, _webapp_embedder
+            )
+            if query_emb is None:
+                error = "Failed to compute embedding."
+                return render_template_string(
+                    HTML_TEMPLATE,
+                    results=None,
+                    error=error,
+                    query=None,
+                    dois_value=dois_arg,
+                )
+
+            _save_query_embedding(query_key, query_emb)
+
+        results = _find_similar(query_emb, limit=10)
+        if not results:
+            error = "No similar entries found."
+
+        query_info = {
+            "dois": [
+                {"doi": doi, "title": (fetch_frontmatter(doi) or {}).get("title", "")}
+                for doi in dois_raw
+            ]
+        }
+
+        return render_template_string(
+            HTML_TEMPLATE,
+            results=results,
+            error=error,
+            query=query_info,
+            dois_value=dois_arg,
+        )
+
+    return app
+
+
+if __name__ == "__main__":
+    app = create_app()
     app.run(host="0.0.0.0", port=8080, debug=True)

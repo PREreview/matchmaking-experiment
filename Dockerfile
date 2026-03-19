@@ -1,7 +1,7 @@
 FROM python:3.12 AS builder
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+  PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 
 RUN python -m venv .venv
@@ -15,4 +15,4 @@ COPY fastembed_cache ./fastembed_cache/
 COPY data ./data/
 COPY static ./static/
 COPY *.py .
-CMD ["/app/.venv/bin/gunicorn", "--bind=[::]:8080", "--access-logfile=-", "app:app"]
+CMD ["/app/.venv/bin/gunicorn", "--bind=[::]:8080", "--access-logfile=-", "app:create_app()"]
