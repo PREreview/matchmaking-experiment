@@ -136,6 +136,10 @@ def record_exists(conn, doi):
         return False
 
 
+def isWithdrawn(frontmatter):
+    return "withdrawn" in frontmatter["title"].lower()
+
+
 def main():
 
     load_dotenv()
@@ -175,6 +179,12 @@ def main():
         frontmatter = fetch_frontmatter(doi)
         if frontmatter is None:
             print(f"[{idx}] Failed to fetch frontmatter for DOI {doi}")
+            continue
+
+        if isWithdrawn(frontmatter):
+            print(
+                f"skipping {entry.requestId} due to withdrawn in title: {frontmatter["title"]}"
+            )
             continue
 
         embedding = calc_embedding(frontmatter, embedder)
