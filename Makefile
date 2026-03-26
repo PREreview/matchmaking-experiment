@@ -17,5 +17,5 @@ generate-embeddings:
 .PHONY: deploy
 deploy:
 	uv run download_model.py
-	fly machine start
+	fly machine start $$(fly machine list --quiet)
 	fly deploy
